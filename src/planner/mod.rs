@@ -104,6 +104,7 @@ pub mod linux;
 pub mod macos;
 pub mod ostree;
 pub mod steam_deck;
+pub mod windows;
 
 use std::{collections::HashMap, path::PathBuf, string::FromUtf8Error, sync::OnceLock};
 
@@ -165,7 +166,7 @@ use crate::{
     Action, InstallPlan, NixInstallerError,
     action::{ActionError, StatefulAction},
     error::HasExpectedErrors,
-    settings::{CommonSettings, InstallSettingsError},
+    settings::{self, CommonSettings, InstallSettingsError},
 };
 
 /// Something which can be used to plan out an [`InstallPlan`]
@@ -220,6 +221,9 @@ pub enum BuiltinPlanner {
     #[cfg_attr(not(target_os = "macos"), clap(hide = true))]
     /// A planner for MacOS (Darwin) systems
     Macos(macos::Macos),
+    /// A planner for Windows systems.
+    #[cfg_attr(not(target_os = "windows"), clap(hide = true))]
+    Windows(windows::Windows),
 }
 
 impl BuiltinPlanner {
@@ -270,6 +274,7 @@ impl BuiltinPlanner {
             BuiltinPlanner::SteamDeck(inner) => inner.settings = settings,
             BuiltinPlanner::Ostree(inner) => inner.settings = settings,
             BuiltinPlanner::Macos(inner) => inner.settings = settings,
+            BuiltinPlanner::Windows(inner) => inner.settings = settings,
         }
         Ok(built)
     }
@@ -280,6 +285,7 @@ impl BuiltinPlanner {
             BuiltinPlanner::SteamDeck(inner) => &inner.settings,
             BuiltinPlanner::Ostree(inner) => &inner.settings,
             BuiltinPlanner::Macos(inner) => &inner.settings,
+            BuiltinPlanner::Windows(inner) => &inner.settings,
         }
     }
 
@@ -289,6 +295,7 @@ impl BuiltinPlanner {
             BuiltinPlanner::SteamDeck(inner) => &mut inner.settings,
             BuiltinPlanner::Ostree(inner) => &mut inner.settings,
             BuiltinPlanner::Macos(inner) => &mut inner.settings,
+            BuiltinPlanner::Windows(inner) => &mut inner.settings,
         }
     }
 
@@ -298,6 +305,7 @@ impl BuiltinPlanner {
             BuiltinPlanner::SteamDeck(inner) => inner.configured_settings(),
             BuiltinPlanner::Ostree(inner) => inner.configured_settings(),
             BuiltinPlanner::Macos(inner) => inner.configured_settings(),
+            BuiltinPlanner::Windows(inner) => &inner.configured_settings(),
         }
     }
 
@@ -307,6 +315,7 @@ impl BuiltinPlanner {
             BuiltinPlanner::SteamDeck(planner) => InstallPlan::plan(planner),
             BuiltinPlanner::Ostree(planner) => InstallPlan::plan(planner),
             BuiltinPlanner::Macos(planner) => InstallPlan::plan(planner),
+            BuiltinPlanner::Windows(planner) => InstallPlan::plan(planner),
         }
     }
     pub fn boxed(self) -> Box<dyn Planner> {

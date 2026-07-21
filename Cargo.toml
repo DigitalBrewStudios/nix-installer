@@ -98,6 +98,9 @@ eyre = { version = "0.6.8", default-features = false, features = [
   "track-caller",
 ] }
 
+[target.'cfg(windows)'.dependencies]
+winreg = "0.56.0"
+
 [profile.release]
 strip = true    # Automatically strip symbols from the binary.
 opt-level = "z" # Optimize for size.
